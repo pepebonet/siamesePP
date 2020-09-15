@@ -21,12 +21,10 @@ def kmer2code(kmer_bytes):
 
 
 def get_data(treated):
-    return pd.read_csv(treated, sep='\t', header=None, nrows=40000, names=names_all)
+    return pd.read_csv(treated, sep='\t', header=None, names=names_all)
 
 
 def get_equals_set(df):
-    # df1 = pd.DataFrame(); df2 = pd.DataFrame()
-
     c = Counter(df['pos_in_strand'])
     to_analyze = [el for el in c.elements() if c[el] >= 2]
     
@@ -35,18 +33,8 @@ def get_equals_set(df):
         pos = np.argwhere(df['pos_in_strand'].values == el).flatten()  
         arr1 = np.append(arr1, np.asarray(pos[:int(len(pos) / 2)]))
         arr2 = np.append(arr2, np.asarray(pos[int(len(pos) / 2):]))
-        if len(pos) > 2:
-            import pdb;pdb.set_trace()
-    import pdb;pdb.set_trace()
-    return pd.merge(df.iloc[arr1, :], df.iloc[arr2, :], on=['pos_in_strand'], how='inner')
 
-    # import pdb;pdb.set_trace()
-    # for i, j in df.groupby('pos_in_strand'):
-    #     import pdb;pdb.set_trace()
-    #     if j.shape[0] > 1:
-    #         df1 = pd.concat([df1, j.iloc[:int(j.shape[0]/2), :]])
-    #         df2 = pd.concat([df2, j.iloc[int(j.shape[0]/2):, :]])
-    # return pd.merge(df1, df2, on=['pos_in_strand'], how='inner')
+    return pd.merge(df.iloc[arr1, :], df.iloc[arr2, :], on=['pos_in_strand'], how='inner')
 
 
 def get_training_test_val(df):
@@ -56,7 +44,6 @@ def get_training_test_val(df):
 
 
 def preprocess_sequence(df, output, file, pair):
-    import pdb;pdb.set_trace()
     df = df.dropna()
     kmer = df['kmer_{}'.format(pair)].apply(kmer2code)
     base_mean = [tf.strings.to_number(i.split(','), tf.float32) \
@@ -91,7 +78,6 @@ def preprocess_sequence(df, output, file, pair):
     return None
 
 
-#raw data. find pairs of same position and get a training test and val set
 @click.command(short_help='Script to separate files per position')
 @click.option(
     '-t', '--treated', help='treated file'
