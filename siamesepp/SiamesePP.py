@@ -50,6 +50,38 @@ def load_data(file):
         signal_kurt, signal_diff, signal_lens, label
 
 
+def get_alternative_siamese(input_shape):
+    # Define the tensors for the two input images
+    left_input = Input(input_shape)
+    right_input = Input(input_shape)
+
+    model = Sequential()
+    model.add(tf.keras.layers.InputLayer(input_shape=input_shape))
+    model.add(tf.keras.layers.Conv1D(256, 5, activation='relu'))
+    model.add(tf.keras.layers.LocallyConnected1D(128, 3, activation='relu', kernel_initializer=initialize_weights, bias_initializer=initialize_bias, kernel_regularizer=l2(2e-4)))
+    model.add(tf.keras.layers.Conv1D(256, 3, activation='relu'))
+    model.add(tf.keras.layers.LocallyConnected1D(128, 3, activation='relu', kernel_initializer=initialize_weights, bias_initializer=initialize_bias, kernel_regularizer=l2(2e-4)))
+    model.add(tf.keras.layers.GlobalAveragePooling1D(name='seq_pooling_layer'))
+    model.add(tf.keras.layers.Dropout(0.2))
+
+    # Generate the encodings (feature vectors) for the two images
+    encoded_l = model(left_input)
+    encoded_r = model(right_input)
+    
+    # Add a customized layer to compute the absolute difference between the encodings
+    L1_layer = Lambda(lambda tensors:K.abs(tensors[0] - tensors[1]))
+    L1_distance = L1_layer([encoded_l, encoded_r])
+    
+    # Add a dense layer with a sigmoid unit to generate the similarity score
+    prediction = Dense(1, activation='sigmoid', bias_initializer=initialize_bias)(L1_distance)
+    
+    # Connect the inputs with the outputs
+    siamese_net = Model(inputs=[left_input,right_input],outputs=prediction)
+    
+    # return the model
+    return siamese_net
+
+
 def get_siamese_model(input_shape):
     """
         Model architecture
@@ -116,9 +148,13 @@ def train_model(train_file, batch_size=1, kmer=17, epochs=100):
                                     axis=2)
 
     import pdb;pdb.set_trace()
-    model = get_siamese_model((105, 105, 1))
-    optimizer = Adam(lr = 0.00006)
-    model.compile(loss="binary_crossentropy",optimizer=optimizer)
+    model = get_alternative_siamese((kmer, embedding_size + 7))
+    # optimizer = Adam(lr = 0.00006)
+    # model.compile(loss="binary_crossentropy",optimizer=optimizer)
+    model.compile(loss='binary_crossentropy',
+              optimizer=tf.keras.optimizers.Adam(),
+              metrics=['accuracy'])
+    print(model.summary())
 
     model.fit(input_train, label, batch_size=batch_size, epochs=epochs)
 
@@ -126,12 +162,10 @@ def train_model(train_file, batch_size=1, kmer=17, epochs=100):
 
 
 def main():
-    path = '/workspace/projects/nanopore/stockholm/ecoli/sequence_features/test_more_features/all_features/val_seq.h5'
+    val = '/workspace/projects/nanopore/siamesePP/outputs/features_ecoli/val_seq.h5'
+    train = '/workspace/projects/nanopore/siamesePP/outputs/features_ecoli/train_seq.h5'
     features = train_model(path)
     
-
-    
-
 
 if __name__ == '__main__':
     main()
