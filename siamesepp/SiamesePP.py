@@ -34,16 +34,16 @@ def load_data(file, pair):
 
     with h5py.File(file, 'r') as hf:
         bases = hf['kmer_{}'.format(pair)][:]
-        signal_means = hf['signal_means_{}'.format(pair)][:]
-        signal_stds = hf['signal_stds_{}'.format(pair)][:]
-        signal_median = hf['signal_median_{}'.format(pair)][:]
+        # signal_means = hf['signal_means_{}'.format(pair)][:]
+        # signal_stds = hf['signal_stds_{}'.format(pair)][:]
+        # signal_median = hf['signal_median_{}'.format(pair)][:]
         # signal_skew = hf['signal_skew_{}'.format(pair)][:]
         # signal_kurt = hf['signal_kurt_{}'.format(pair)][:]
         # signal_diff = hf['signal_diff_{}'.format(pair)][:]
-        # signal_lens = hf['signal_lens_{}'.format(pair)][:]
+        signal_lens = hf['signal_lens_{}'.format(pair)][:]
         label = hf['label_{}'.format(pair)][:]
 
-    return bases, signal_means, signal_stds, signal_median, label
+    return bases, signal_lens, label
     # return bases, signal_means, signal_stds, signal_median, signal_skew, \
         # signal_kurt, signal_diff, signal_lens, label
 
@@ -71,7 +71,7 @@ def get_alternative_siamese(input_shape):
     L1_distance = L1_layer([encoded_l, encoded_r])
     
     # Add a dense layer with a sigmoid unit to generate the similarity score
-    prediction = Dense(1, activation='sigmoid', bias_initializer=initialize_bias)(L1_distance)
+    prediction = Dense(1, activation='sigmoid')(L1_distance)
     
     # Connect the inputs with the outputs
     siamese_net = Model(inputs=[left_input,right_input],outputs=prediction)
@@ -89,11 +89,11 @@ def get_pairs(g1, g2):
     
 
 
-def concat_tensors(bases, v2, v3, v4, kmer):
+def concat_tensors(bases, v2, kmer):
     return tf.concat([bases, 
-                                tf.reshape(v2, [-1, kmer, 1]),
-                                tf.reshape(v3, [-1, kmer, 1]),
-                                tf.reshape(v4, [-1, kmer, 1])],
+                                tf.reshape(v2, [-1, kmer, 1])],
+                                # tf.reshape(v3, [-1, kmer, 1]),
+                                # tf.reshape(v4, [-1, kmer, 1]),
                                 # tf.reshape(v5, [-1, kmer, 1]),
                                 # tf.reshape(v6, [-1, kmer, 1]),
                                 # tf.reshape(v7, [-1, kmer, 1]),
@@ -102,17 +102,17 @@ def concat_tensors(bases, v2, v3, v4, kmer):
 
 
 def train_model(train_file, val_file, log_dir, model_dir, 
-    batch_size, kmer_sequence, epochs, one_hot_embedding):
+    batch_size, kmer_sequence, epochs):
 
     embedding_flag = ""
 
     ## preprocess data
-    bases_x, signal_means_x, signal_stds_x, signal_median_x, \
+    bases_x, signal_means_x, \
         label_x = load_data(train_file, 'x')
-    bases_y, signal_means_y, signal_stds_y, signal_median_y, \
+    bases_y, signal_means_y,  \
         label_y = load_data(train_file, 'y')
-    v1_x, v2_x, v3_x, v4_x, vy_x  = load_data(val_file, 'x')
-    v1_y, v2_y, v3_y, v4_y, vy_y  = load_data(val_file, 'y')
+    v1_x, v2_x, vy_x  = load_data(val_file, 'x')
+    v1_y, v2_y, vy_y  = load_data(val_file, 'y')
     # bases_x, signal_means_x, signal_stds_x, signal_median_x, signal_skew_x, \
     #     signal_kurt_x, signal_diff_x, signal_lens_x, label_x = load_data(train_file, 'x')
     # bases_y, signal_means_y, signal_stds_y, signal_median_y, signal_skew_y, \
@@ -127,18 +127,18 @@ def train_model(train_file, val_file, log_dir, model_dir,
 
     ## prepare inputs for NNs
     input_train_x = concat_tensors(
-        embedded_bases, signal_means_x, signal_stds_x, signal_median_x, 
+        embedded_bases, signal_means_x, 
         kmer_sequence
     )
     input_train_y = concat_tensors(
-        embedded_bases, signal_means_y, signal_stds_y, signal_median_y, 
+        embedded_bases, signal_means_y, 
         kmer_sequence
     )
     input_val_x = concat_tensors(
-        val_bases, v2_x, v3_x, v4_x, kmer_sequence
+        val_bases, v2_x, kmer_sequence
     )
     input_val_y = concat_tensors(
-        val_bases, v2_y, v3_y, v4_y, kmer_sequence
+        val_bases, v2_y, kmer_sequence
     )
     # input_train_x = concat_tensors(
     #     embedded_bases, signal_means_x, signal_stds_x, signal_median_x, 
@@ -159,7 +159,7 @@ def train_model(train_file, val_file, log_dir, model_dir,
     pairs_val = get_pairs(input_val_x, input_val_y)
 
     
-    model = get_alternative_siamese((kmer_sequence, embedding_size + 4))
+    model = get_alternative_siamese((kmer_sequence, embedding_size + 1))
     log_dir += datetime.datetime.now().strftime("%Y%m%d-%H%M%S_lstm")
 
     model.compile(loss='binary_crossentropy',
@@ -188,10 +188,6 @@ def train_model(train_file, val_file, log_dir, model_dir,
     help='path to validation set'
 )
 @click.option(
-    '-one_hot', '--one_hot_embedding', is_flag=True,
-    help='use one hot embedding'
-)
-@click.option(
     '-ks', '--kmer_sequence', default=17,
     help='kmer length for sequence training'
 )
@@ -212,11 +208,11 @@ def train_model(train_file, val_file, log_dir, model_dir,
     help='Batch size for training both models'
 )
 def main(train_file, val_file, log_dir, model_dir, 
-    batch_size, kmer_sequence, epochs, one_hot_embedding):
+    batch_size, kmer_sequence, epochs):
 
     train_model(
         train_file, val_file, log_dir, model_dir, 
-        batch_size, kmer_sequence, epochs, one_hot_embedding
+        batch_size, kmer_sequence, epochs
     )
     
 
