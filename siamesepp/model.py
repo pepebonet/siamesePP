@@ -8,7 +8,6 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, Lambda, Dense
 
 
-
 def initialize_bias(shape, dtype=None):
     return K.variable(np.random.normal(loc = 0.5, scale = 1e-2, size = shape), dtype)
 
