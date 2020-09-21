@@ -82,53 +82,30 @@ def preprocess_sequence(df, output, data_type, file, pair):
     return None
 
 
-@click.command(short_help='Script to separate files per position')
-@click.option(
-    '-dt', '--data-type', required=True,
-    type=click.Choice(['sup', 'unsup']),
-    help='Supervised '
-)
-@click.option(
-    '-ud', '--unsupervised-data', help='unsupervised data file'
-)
-@click.option(
-    '-t', '--treated', help='treated file'
-)
-@click.option(
-    '-un', '--untreated', help='untreated file'
-)
-@click.option(
-    '-o', '--output', default=''
-)
-def main(data_type, unsupervised_data, treated, untreated, output):
-    if data_type == 'sup':
-
-        treated = get_data(treated)
-        untreated = get_data(untreated)
-        
-        treat_untreat = pd.merge(treated, untreated, on=['pos_in_strand'], how='inner')
-        treat_untreat['label'] = 0
-
-        treat_treat = get_equals_set(treated)
-        treat_treat['label'] = 1
-        
-        untreat_untreat = get_equals_set(untreated)
-        untreat_untreat['label'] = 1
-
-        df = pd.concat([treat_untreat, treat_treat, untreat_untreat])
-        data = get_training_test_val(df)
-
-        for el in data:
-            preprocess_sequence(el[0], output, el[1], 'x')
-            preprocess_sequence(el[0], output, el[1], 'y') 
+def do_supervised(treated, untreated, data_type, output):
+    treated = get_data(treated)
+    untreated = get_data(untreated)
     
-    else:
-        df = get_data(unsupervised_data)
-        df_pairs = get_equals_set(df)
+    treat_untreat = pd.merge(treated, untreated, on=['pos_in_strand'], how='inner')
+    treat_untreat['label'] = 0
 
-        preprocess_sequence(df_pairs, output, data_type, 'mms', 'x')
-        preprocess_sequence(df_pairs, output, data_type, 'mms', 'y') 
+    treat_treat = get_equals_set(treated)
+    treat_treat['label'] = 1
+    
+    untreat_untreat = get_equals_set(untreated)
+    untreat_untreat['label'] = 1
+
+    df = pd.concat([treat_untreat, treat_treat, untreat_untreat])
+    data = get_training_test_val(df)
+
+    for el in data:
+        preprocess_sequence(el[0], output, data_type, el[1], 'x')
+        preprocess_sequence(el[0], output, data_type, el[1], 'y') 
 
 
-if __name__ == '__main__':
-    main()
+def do_unsupervised(unsupervised_data, data_type, output):
+    df = get_data(unsupervised_data)
+    df_pairs = get_equals_set(df)
+
+    preprocess_sequence(df_pairs, output, data_type, 'mms', 'x')
+    preprocess_sequence(df_pairs, output, data_type, 'mms', 'y') 
