@@ -8,17 +8,17 @@ from tensorflow.keras.models import load_model
 from sklearn.metrics import precision_recall_fscore_support
 
 import siamesepp.utils as ut
-import siamesepp.train as tr
+import siamesepp.model as md
 
 
 def load_model(model_file, kmer, feat):
-    model = tr.get_alternative_siamese((kmer, feat))
+    model = md.get_alternative_siamese((kmer, feat))
     model.load_weights(os.path.join(model_file, "weights.h5"))
     model.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(), metrics=['accuracy'])
     return model
 
 
-def acc_test_single(data, labels, model_file, kmer, feat=12, score_av='binary'):
+def acc_test_single(data, labels, model, kmer, feat=12, score_av='binary'):
     test_loss, test_acc = model.evaluate(data, tf.convert_to_tensor(labels))
 
     pred =  model.predict(data).flatten()
@@ -50,6 +50,7 @@ def call_mods(data_type, test_file, model_file, kmer, output, feat=12):
         save_output(acc, output, 'accuracy_measurements.txt')
     else:
         pred, inferred = infer_mods(data, model)
+    
     save_probs(pred, inferred, labels, output)
 
 
@@ -66,33 +67,3 @@ def save_output(acc, output, label):
     col_names = ['Accuracy', 'Precision', 'Recall', 'F-score']
     df = pd.DataFrame([acc], columns=col_names)
     df.to_csv(os.path.join(output, label), index=False, sep='\t')
-
-
-@click.command(short_help='Script test a set')
-@click.option(
-    '-dt', '--data-type', required=True,
-    type=click.Choice(['sup', 'unsup']),
-    help='Supervised '
-)
-@click.option(
-    '-tf', '--test_file', default='',
-    help='path to test set'
-)
-@click.option(
-    '-ks', '--kmer_sequence', default=17,
-    help='kmer length for sequence training'
-)
-@click.option(
-    '-md', '--model_dir', default='models/',
-    help='directory to trained model'
-)
-@click.option(
-    '-o', '--output', default=''
-)
-def main(data_type, test_file, model_dir, kmer_sequence, output):
-
-    call_mods(data_type, test_file, model_dir, kmer_sequence, output)
-    
-
-if __name__ == '__main__':
-    main()
