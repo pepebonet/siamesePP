@@ -70,9 +70,6 @@ def call_modifications(data_type, test_file, model_dir, kmer_sequence, output):
     help='Supervised or unsupervised tests'
 )
 @click.option(
-    '-ud', '--unsupervised-data', help='unsupervised data file'
-)
-@click.option(
     '-t', '--treated', help='treated file'
 )
 @click.option(
@@ -85,7 +82,7 @@ def get_pairs(data_type, unsupervised_data, treated, untreated, output):
     if data_type == 'sup':
         do_supervised(treated, untreated, data_type, output)
     else:
-        do_unsupervised(unsupervised_data, data_type, output)
+        do_unsupervised(treated, untreated, data_type, output)
 
 
 # ------------------------------------------------------------------------------

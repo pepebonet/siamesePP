@@ -103,9 +103,14 @@ def do_supervised(treated, untreated, data_type, output):
         preprocess_sequence(el[0], output, data_type, el[1], 'y') 
 
 
-def do_unsupervised(unsupervised_data, data_type, output):
-    df = get_data(unsupervised_data)
-    df_pairs = get_equals_set(df)
+def do_unsupervised(treated, untreated, data_type, output):
+    treated = get_data(treated)
+    untreated = get_data(untreated)
 
-    preprocess_sequence(df_pairs, output, data_type, 'mms', 'x')
-    preprocess_sequence(df_pairs, output, data_type, 'mms', 'y') 
+    treated['id'] = treated['chrom'] + '_' + treated['pos'].astype(str)
+    untreated['id'] = untreated['chrom'] + '_' + untreated['pos'].astype(str)
+
+    df_pairs = pd.merge(treated, untreated, on='id', how='inner')
+
+    preprocess_sequence(df_pairs, output, data_type, 'mms_untreated', 'x')
+    preprocess_sequence(df_pairs, output, data_type, 'mms_untreated', 'y') 
