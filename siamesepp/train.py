@@ -21,7 +21,7 @@ def train_model(train_file, val_file, log_dir, model_dir,
     pairs_val, labels_val = ut.get_pairs(val_file, kmer_sequence)
 
     embedding_size = 5
-    model = md.get_alternative_siamese((kmer_sequence, embedding_size + 7))
+    model = md.get_alternative_siamese((kmer_sequence, embedding_size + 4))
     log_dir += datetime.datetime.now().strftime("%Y%m%d-%H%M%S_lstm")
 
     model.compile(loss='binary_crossentropy',
