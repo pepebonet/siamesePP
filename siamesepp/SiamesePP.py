@@ -78,7 +78,7 @@ def call_modifications(data_type, test_file, model_dir, kmer_sequence, output):
 @click.option(
     '-o', '--output', default=''
 )
-def get_pairs(data_type, unsupervised_data, treated, untreated, output):
+def get_pairs(data_type, treated, untreated, output):
     if data_type == 'sup':
         do_supervised(treated, untreated, data_type, output)
     else:
