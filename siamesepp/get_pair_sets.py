@@ -33,28 +33,42 @@ def get_data(path):
 
 
 def get_equals_set(df):
-    c = Counter(df['id'])
-    to_analyze = [el for el in c.elements() if c[el] >= 2]
-
-    if to_analyze:
-        arr1 = np.empty([0,], dtype='int32')
-        arr2 = np.empty([0,], dtype='int32')
-
-        for el in tqdm(list(set(to_analyze))):
-
-            pos = np.argwhere(df['id'].values == el).flatten()  
-            arr1 = np.append(arr1, np.asarray(pos[:int(len(pos) / 2)]))
-            arr2 = np.append(arr2, np.asarray(pos[int(len(pos) / 2):]))
-
-        merged = pd.merge(
-            df.iloc[arr1, :], df.iloc[arr2, :], on=['id'], how='inner'
-        )
-        merged['label'] = 1
-
-        return merged
+    df = df.sort_values(by=['id']).reset_index(drop=True)
+    count = Counter(df['id'])
+    to_analyze = [el for el in count.elements() if count[el] >= 2]
     
-    else:
-        return pd.DataFrame()
+    ids_df = np.sort(df['id'].values.ravel())
+
+    ids_all = np.sort(np.asarray(to_analyze).ravel())
+    indices = np.searchsorted(ids_df, list(set(ids_all)), side='right')
+
+    arr1 = np.empty([0,], dtype='int32')
+    arr2 = np.empty([0,], dtype='int32')
+
+    for el in tqdm(zip(list(set(ids_all)), indices)):
+        num_of_pos = count[el[0]]
+        pos = np.arange(el[1] - num_of_pos, el[1])
+        arr1 = np.append(arr1, pos[:int(len(pos) / 2)])
+        arr2 = np.append(arr2, pos[int(len(pos) / 2):])
+    # import pdb;pdb.set_trace()
+    # if to_analyze:
+        
+    #     for el in tqdm(list(set(ids_all))):
+
+    #         pos = np.argwhere(ids_df == el).flatten() 
+    #         import pdb;pdb.set_trace() 
+    #         arr1 = np.append(arr1, pos[:int(len(pos) / 2)])
+    #         arr2 = np.append(arr2, pos[int(len(pos) / 2):])
+
+    merged = pd.merge(
+        df.iloc[arr1, :], df.iloc[arr2, :], on=['id'], how='inner'
+    )
+    merged['label'] = 1
+
+    return merged
+    
+    # else:
+    #     return pd.DataFrame()
 
 
 def get_training_test_val(df):
