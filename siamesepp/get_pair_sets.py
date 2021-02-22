@@ -20,19 +20,13 @@ names_seq = ['chrom', 'pos', 'strand', 'pos_in_strand', 'readname',
             'read_strand', 'kmer', 'signal_means', 'signal_stds', 'signal_median',
             'signal_diff', 'methyl_label']
 
-base2code_dna = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
-
 
 # ------------------------------------------------------------------------------
 # FUNCTIONS
 # ------------------------------------------------------------------------------
 
-def kmer2code(kmer_bytes):
-    return [base2code_dna[x] for x in kmer_bytes]
-
-
 def get_data(path):
-    df = pd.read_csv(path, sep='\t', header=None, names=names_all)
+    df = pd.read_csv(path, sep='\t', header=None, names=names_seq)
     df['id'] = df['chrom'] + '_' + df['pos'].astype(str) + '_' + df['strand']
 
     return df
@@ -52,8 +46,10 @@ def get_equals_set(df):
             arr1 = np.append(arr1, np.asarray(pos[:int(len(pos) / 2)]))
             arr2 = np.append(arr2, np.asarray(pos[int(len(pos) / 2):]))
 
-        merged = pd.merge(df.iloc[arr1, :], df.iloc[arr2, :], on=['id'], how='inner')
-        emrged['label'] = 1
+        merged = pd.merge(
+            df.iloc[arr1, :], df.iloc[arr2, :], on=['id'], how='inner'
+        )
+        merged['label'] = 1
 
         return merged
     
@@ -79,12 +75,12 @@ def do_supervised(treated, untreated, data_type, output):
     untreat_untreat = get_equals_set(untreated)
 
     df = pd.concat([treat_untreat, treat_treat, untreat_untreat])
-    import pdb; pdb.set_trace()
+
     if df.empty:
         raise Exception('No features could be extracted...')
 
     data = get_training_test_val(df)
-
+    
     for el in data:
         ut.preprocess_sequence(el[0], output, data_type, el[1], 'x')
         ut.preprocess_sequence(el[0], output, data_type, el[1], 'y') 
