@@ -50,15 +50,6 @@ def get_equals_set(df):
         pos = np.arange(el[1] - num_of_pos, el[1])
         arr1 = np.append(arr1, pos[:int(len(pos) / 2)])
         arr2 = np.append(arr2, pos[int(len(pos) / 2):])
-    # import pdb;pdb.set_trace()
-    # if to_analyze:
-        
-    #     for el in tqdm(list(set(ids_all))):
-
-    #         pos = np.argwhere(ids_df == el).flatten() 
-    #         import pdb;pdb.set_trace() 
-    #         arr1 = np.append(arr1, pos[:int(len(pos) / 2)])
-    #         arr2 = np.append(arr2, pos[int(len(pos) / 2):])
 
     merged = pd.merge(
         df.iloc[arr1, :], df.iloc[arr2, :], on=['id'], how='inner'
@@ -66,9 +57,6 @@ def get_equals_set(df):
     merged['label'] = 1
 
     return merged
-    
-    # else:
-    #     return pd.DataFrame()
 
 
 def get_training_test_val(df):
