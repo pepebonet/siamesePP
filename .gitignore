@@ -2,3 +2,4 @@ outputs/
 logs/
 models/
 __pycache__/
+siamesePP.egg-info/
