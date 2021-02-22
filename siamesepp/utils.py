@@ -64,3 +64,43 @@ def get_pairs(feat_file, kmer_sequence, data_type='sup'):
     pairs = get_feat_pairs(input_x, input_y)
 
     return pairs, vy_x
+
+
+def preprocess_sequence(df, output, label_file, file):
+
+    kmer = df['kmer'].apply(kmer2code)
+    base_mean = [tf.strings.to_number(i.split(','), tf.float32) \
+        for i in df['signal_means'].values]
+    base_std = [tf.strings.to_number(i.split(','), tf.float32) \
+        for i in df['signal_stds'].values]
+    base_median = [tf.strings.to_number(i.split(','), tf.float32) \
+        for i in df['signal_median'].values]
+    base_diff = [tf.strings.to_number(i.split(','), tf.float32) \
+        for i in df['signal_diff'].values]
+    label = df['methyl_label']
+    chrom = df['chrom'].values.astype('S')
+    strand = df['strand'].values.astype('S')
+    readname = df['readname'].values.astype('S')
+    pos = df['pos'].values
+    pos_in_strand = df['pos_in_strand'].values
+
+    file_name = os.path.join(
+        output, '{}'.format(label_file), '{}_{}.h5'.format(file, label_file)
+    )
+    if not os.path.isdir(os.path.dirname(file_name)):
+        file_name = os.path.join(output, '{}_{}.h5'.format(file, label_file))
+
+    with h5py.File(file_name, 'a') as hf:
+        hf.create_dataset("kmer",  data=np.stack(kmer))
+        hf.create_dataset("signal_means",  data=np.stack(base_mean))
+        hf.create_dataset("signal_stds",  data=np.stack(base_std))
+        hf.create_dataset("signal_median",  data=np.stack(base_median))
+        hf.create_dataset("signal_diff",  data=np.stack(base_diff))
+        hf.create_dataset("methyl_label",  data=label)
+        hf.create_dataset('chrom',  data=chrom, chunks=True, maxshape=(None,), dtype='S10')
+        hf.create_dataset('strand',  data=strand, chunks=True, maxshape=(None,), dtype='S1')
+        hf.create_dataset('readname',  data=readname, chunks=True, maxshape=(None,), dtype='S200')
+        hf.create_dataset('pos',  data=pos, chunks=True, maxshape=(None,))
+        hf.create_dataset('pos_in_strand',  data=pos_in_strand, chunks=True, maxshape=(None,))
+
+    return None
