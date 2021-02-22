@@ -17,7 +17,7 @@ def load_seq_data(file, pair):
         signal_stds = hf['signal_stds_{}'.format(pair)][:]
         signal_medians = hf['signal_median_{}'.format(pair)][:]
         signal_range = hf['signal_diff_{}'.format(pair)][:]
-        label = hf['methyl_label_{}'.format(pair)][:]
+        label = hf['label_{}'.format(pair)][:]
         chrom = hf['chrom_{}'.format(pair)][:]
         readname = hf['readname_{}'.format(pair)][:]
         pos = hf['pos_{}'.format(pair)][:]
@@ -93,7 +93,7 @@ def preprocess_sequence(df, output, label_file, file, pair):
         for i in df['signal_median_{}'.format(pair)].values]
     base_diff = [tf.strings.to_number(i.split(','), tf.float32) \
         for i in df['signal_diff_{}'.format(pair)].values]
-    label = df['methyl_label_{}'.format(pair)]
+    label = df['label']
     chrom = df['chrom_{}'.format(pair)].values.astype('S')
     strand = df['strand_{}'.format(pair)].values.astype('S')
     readname = df['readname_{}'.format(pair)].values.astype('S')
@@ -112,7 +112,7 @@ def preprocess_sequence(df, output, label_file, file, pair):
         hf.create_dataset('signal_stds_{}'.format(pair),  data=np.stack(base_std))
         hf.create_dataset('signal_median_{}'.format(pair),  data=np.stack(base_median))
         hf.create_dataset('signal_diff_{}'.format(pair),  data=np.stack(base_diff))
-        hf.create_dataset('methyl_label_{}'.format(pair),  data=label)
+        hf.create_dataset('label_{}'.format(pair),  data=label)
         hf.create_dataset('chrom_{}'.format(pair),  data=chrom, chunks=True, maxshape=(None,), dtype='S10')
         hf.create_dataset('strand_{}'.format(pair),  data=strand, chunks=True, maxshape=(None,), dtype='S1')
         hf.create_dataset('readname_{}'.format(pair),  data=readname, chunks=True, maxshape=(None,), dtype='S200')
@@ -120,3 +120,22 @@ def preprocess_sequence(df, output, label_file, file, pair):
         hf.create_dataset('pos_in_strand_{}'.format(pair),  data=pos_in_strand, chunks=True, maxshape=(None,))
 
     return None
+
+
+# ------------------------------------------------------------------------------
+# OUTPUT FUNCTIONS
+# ------------------------------------------------------------------------------
+
+def save_probs(probs, inferred, labels, output):
+    out_probs = os.path.join(output, 'test_pred_prob.txt')
+    probs_to_save = pd.DataFrame(columns=['labels', 'probs', 'inferred'])
+    probs_to_save['labels'] = labels
+    probs_to_save['probs'] = probs
+    probs_to_save['inferred'] = inferred
+    probs_to_save.to_csv(out_probs, sep='\t', index=None)
+
+
+def save_output(acc, output, label):
+    col_names = ['Accuracy', 'Precision', 'Recall', 'F-score']
+    df = pd.DataFrame([acc], columns=col_names)
+    df.to_csv(os.path.join(output, label), index=False, sep='\t')
