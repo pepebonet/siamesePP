@@ -5,11 +5,6 @@ import tensorflow as tf
 
 base2code_dna = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
 
-
-def kmer2code(kmer_bytes):
-    return [base2code_dna[x] for x in kmer_bytes]
-
-
 # ------------------------------------------------------------------------------
 # TRAIN AND CALL MODIFICATIONS
 # ------------------------------------------------------------------------------
@@ -82,6 +77,10 @@ def get_pairs(feat_file, kmer):
 # ------------------------------------------------------------------------------
 #  PREPROCESS
 # ------------------------------------------------------------------------------
+
+def kmer2code(kmer_bytes):
+    return [base2code_dna[x] for x in kmer_bytes]
+
 
 def preprocess_sequence(df, output, label_file, file, pair):
 
