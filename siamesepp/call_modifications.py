@@ -11,7 +11,7 @@ import siamesepp.utils as ut
 import siamesepp.model as md
 
 
-def acc_test_single(data, labels, model, kmer, feat=12, score_av='binary'):
+def acc_test_single(data, labels, model, kmer, score_av='binary'):
     test_loss, test_acc = model.evaluate(data, tf.convert_to_tensor(labels))
 
     pred =  model.predict(data).flatten()
@@ -34,7 +34,7 @@ def infer_mods(data, model):
     return pred, inferred
 
 
-def call_mods(data_type, test_file, model_file, kmer, output, feat=12):
+def call_mods(data_type, test_file, model_file, kmer, output):
     data, labels = ut.get_pairs(test_file, kmer)
     model = load_model(model_file)
 
