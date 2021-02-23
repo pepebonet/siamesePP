@@ -71,12 +71,12 @@ def do_supervised(treated, untreated, data_type, output, split_file):
 
     treat_untreat = pd.merge(treated, untreated, on=['id'], how='inner')
     treat_untreat['label'] = 0
-    import pdb;pdb.set_trace()
-    print(treat_untreat.shape[0])
+    print('Number of treated untreated pairs: {}'.format(treat_untreat.shape[0]))
+
     treat_treat = get_equals_set(treated)
     
     untreat_untreat = get_equals_set(untreated)
-    import pdb;pdb.set_trace()
+
     df = pd.concat([treat_untreat, treat_treat, untreat_untreat])
     print('Total number of features: {}'.format(df.shape[0]))
 
