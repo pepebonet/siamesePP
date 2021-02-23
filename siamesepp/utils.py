@@ -1,6 +1,7 @@
 import os
 import h5py
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 base2code_dna = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 4}
