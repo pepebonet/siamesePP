@@ -65,7 +65,7 @@ def get_training_test_val(df):
     return [(train, 'train'), (test, 'test'), (val, 'val')]
 
 
-def do_supervised(treated, untreated, data_type, output):
+def do_supervised(treated, untreated, data_type, output, split_file):
     treated = get_data(treated)
     untreated = get_data(untreated)
 
@@ -81,7 +81,10 @@ def do_supervised(treated, untreated, data_type, output):
     if df.empty:
         raise Exception('No features could be extracted...')
 
-    data = get_training_test_val(df)
+    if split_file:
+        data = get_training_test_val(df)
+    else:
+        data = [(df, 'test')]
     
     for el in data:
         ut.preprocess_sequence(el[0], output, data_type, el[1], 'x')

@@ -76,11 +76,15 @@ def call_modifications(data_type, test_file, model_dir, kmer_sequence, output):
     '-un', '--untreated', help='untreated file'
 )
 @click.option(
+    '-sf', '--split-file', is_flag=True, 
+    help='whether to split file into train test and val or not'
+)
+@click.option(
     '-o', '--output', default=''
 )
-def get_pairs(data_type, treated, untreated, output):
+def get_pairs(data_type, treated, untreated, output, split_file):
     if data_type == 'sup':
-        do_supervised(treated, untreated, data_type, output)
+        do_supervised(treated, untreated, data_type, output, split_file)
     else:
         do_unsupervised(treated, untreated, data_type, output)
 
