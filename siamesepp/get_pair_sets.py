@@ -65,10 +65,21 @@ def get_training_test_val(df):
     return [(train, 'train'), (test, 'test'), (val, 'val')]
 
 
+def reduce_data_for_merge(df):
+    red_df = pd.DataFrame()
+    for i, j in df.groupby('id'): 
+        red_df = pd.concat([red_df, j.sample(n=40)])
+    
+    return red_df
+
+
 def do_supervised(treated, untreated, data_type, output, split_file):
     treated = get_data(treated)
     untreated = get_data(untreated)
 
+    treated = reduce_data_for_merge(treated)
+    untreated = reduce_data_for_merge(untreated)
+    import pdb;pdb.set_trace()
     treat_untreat = pd.merge(treated, untreated, on=['id'], how='inner')
     treat_untreat['label'] = 0
     print('Number of treated untreated pairs: {}'.format(treat_untreat.shape[0]))
