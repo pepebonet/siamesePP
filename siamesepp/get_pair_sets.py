@@ -11,11 +11,6 @@ from sklearn.model_selection import train_test_split
 
 import siamesepp.utils as ut
 
-#TODO change to only seq
-names_all = ['chrom', 'pos', 'strand', 'pos_in_strand', 'readname',
-            'read_strand', 'kmer', 'signal_means', 'signal_stds', 'signal_median',
-            'signal_diff', 'qual', 'mis', 'ins', 'del', 'methyl_label']
-
 names_seq = ['chrom', 'pos', 'strand', 'pos_in_strand', 'readname',
             'read_strand', 'kmer', 'signal_means', 'signal_stds', 'signal_median',
             'signal_diff', 'methyl_label']
@@ -68,7 +63,10 @@ def get_training_test_val(df):
 def reduce_data_for_merge(df):
     red_df = pd.DataFrame()
     for i, j in df.groupby('id'): 
-        red_df = pd.concat([red_df, j.sample(n=40)])
+        try: 
+            red_df = pd.concat([red_df, j.sample(n=40)])
+        except: 
+            red_df = pd.concat([red_df, j])
     
     return red_df
 
@@ -77,9 +75,12 @@ def do_supervised(treated, untreated, data_type, output, split_file):
     treated = get_data(treated)
     untreated = get_data(untreated)
 
-    treated = reduce_data_for_merge(treated)
-    untreated = reduce_data_for_merge(untreated)
-    import pdb;pdb.set_trace()
+    if treated.groupby('id').apply(lambda x: x.shape[0]).max() > 40:
+        treated = reduce_data_for_merge(treated)
+    
+    if untreated.groupby('id').apply(lambda x: x.shape[0]).max() > 40:
+        untreated = reduce_data_for_merge(untreated)
+
     treat_untreat = pd.merge(treated, untreated, on=['id'], how='inner')
     treat_untreat['label'] = 0
     print('Number of treated untreated pairs: {}'.format(treat_untreat.shape[0]))
@@ -87,7 +88,7 @@ def do_supervised(treated, untreated, data_type, output, split_file):
     treat_treat = get_equals_set(treated)
     
     untreat_untreat = get_equals_set(untreated)
-
+    
     df = pd.concat([treat_untreat, treat_treat, untreat_untreat])
     print('Total number of features: {}'.format(df.shape[0]))
 
@@ -98,7 +99,7 @@ def do_supervised(treated, untreated, data_type, output, split_file):
         data = get_training_test_val(df)
     else:
         data = [(df, 'test')]
-    
+
     for el in data:
         ut.preprocess_sequence(el[0], output, data_type, el[1], 'x')
         ut.preprocess_sequence(el[0], output, data_type, el[1], 'y') 
