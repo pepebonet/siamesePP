@@ -103,8 +103,8 @@ def plot_ROC_deepmp_siamese(siamese, deepmp, fig_out, kn='Linear'):
     plt.plot (fpr_dmp, tpr_dmp, lw=2, c='#08519c')
 
     plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlim([-0.05, 1.05])
-    plt.ylim([-0.05, 1.05])
+    # plt.xlim([-0.05, 1.05])
+    # plt.ylim([-0.05, 1.05])
 
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
@@ -200,7 +200,6 @@ def main(deepmp_output, siamese_output, deepmp_accuracies, siamese_accuracies, o
     if deepmp_output:
         deepmp = pd.read_csv(deepmp_output, sep='\t')
 
-    import pdb;pdb.set_trace()
     get_barplot(deepmp_accuracies, siamese_accuracies, output)
     plot_ROC_deepmp_siamese(siamese, deepmp, out_fig)
     plot_precision_recall_siamese(deepmp, siamese, prc_fig)
